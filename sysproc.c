@@ -121,3 +121,17 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+int 
+sys_modpriority(void){
+  
+  int value;
+
+  if(argint(0, &value) < 0)
+    return -1;
+
+  int j = modpriority(value);
+  //TODO
+  return j;
+
+}

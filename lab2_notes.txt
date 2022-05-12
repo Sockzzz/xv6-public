@@ -1,0 +1,47 @@
+Scheduler
+
+-os module that manipulates queues
+
+-scheduling algorithm dterermines which job to run next
+
+-sheduler runs
+    -when job switches
+    -when interrupts occur
+    -when a job is created or terminated 
+
+-algorithm evaluation
+
+-Round robin strategy
+    -every process gets a certain amount of cpu time
+    -if task doesnt finish in its time slot it goes back into the queue
+
+-RR current implementation 
+    -fund next process in ptable
+    -if runnable continue
+    -swich to that process
+    -change its state to 'running'
+    -process finished/time up
+    -swich back to scheduler
+
+-Priority
+    -chooses next based on Priority
+    -solution to starvation
+        -decrease priority of next proc chosen to run
+        -increase other priorities
+
+-our job
+    -go through table comparing pvalue
+    -pick process with lowest pvalue
+    -if runnable switch to process (if runnable -> if ready)
+    -change state to 'running'
+    -swich back to scheduler
+
+    -implement aging of priority
+        - p1(1), p2(5), p3(7) -> p1(2), p2(4), p3(6)
+        - change values (of only runnable procs), call yield
+        
+-test using given lines in slides
+
+
+
+

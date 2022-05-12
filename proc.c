@@ -184,10 +184,20 @@ fork(void)
   struct proc *np;
   struct proc *curproc = myproc();
 
+
+
+
+  cprintf("\n");
+
   // Allocate process.
   if((np = allocproc()) == 0){
     return -1;
   }
+
+  acquire(&tickslock);
+  np->startTime = ticks; //added in lab2 step 5
+  release(&tickslock);
+  np->runCount = -1;
 
   // Copy process state from proc.
   if((np->pgdir = copyuvm(curproc->pgdir, curproc->sz)) == 0){
@@ -232,6 +242,7 @@ exit(int status)
   curproc->status = status; //added lab 1
   int fd;
 
+
   if(curproc == initproc)
     panic("init exiting");
 
@@ -264,6 +275,25 @@ exit(int status)
 
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
+ 
+  acquire(&tickslock);
+  curproc->endTime = ticks; //added in lab 2 part 5
+  release(&tickslock);
+
+  int endT = curproc->endTime;
+  int startT = curproc->startTime;
+  int runC = curproc->runCount;
+
+  int turnAround = endT - startT; 
+  int waitT = turnAround - runC;
+
+  cprintf("%s %d, %d", "Turn Around Time for PID: ",curproc->pid, turnAround);
+  cprintf("\n");
+  cprintf("%s %d, %d", "Waitint Time for PID: ",curproc->pid, waitT);
+  cprintf("\n");
+  //    cprintf("%d %s %s", p->pid, state, p->name);
+
+
   sched();
   panic("zombie exit");
 
@@ -287,6 +317,7 @@ wait(int *status) //lab 1 change, not sure where to return childs exit status
         continue;
       havekids = 1;
       if(p->state == ZOMBIE){
+
         // Found one.
         pid = p->pid;
         kfree(p->kstack);
@@ -366,26 +397,66 @@ waitpid(int pid2, int *status, int options) //lab 1 change, not sure where to re
 //  - swtch to start running that process
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
+
 void
 scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
+  //declaration of new variables
+  //struct proc *myhold;
+  int min;
   
   for(;;){
     // Enable interrupts on this processor.
     sti();
 
-    // Loop over process table looking for process to run.
+
     acquire(&ptable.lock);
+
+    min = ptable.proc->prior_val;
+    
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
 
+      if(p->prior_val<min){
+        min = p->prior_val;
+      }
+    }
+    ///good up to here
+    // Loop over process table looking for process to run.
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->state != RUNNABLE)
+        continue;
+
+
+      int myint = p->prior_val;
+      //if not intended process, increase priority
+      if(myint != min){
+        if(myint!=0){
+          myint = myint-1;
+          p->prior_val = myint;
+        }
+
+        continue;
+      }
+      //intended process found, decrease priority
+      if(myint!=32){
+        myint = myint+1;
+        p->prior_val = myint;
+      }
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
+
+
+      p->runCount = p->runCount+1; //lab2 part 5 added
+      cprintf("%s %d, %d", "Count time ",p->pid, p->runCount);
+      cprintf("\n");
+
+
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
@@ -402,7 +473,9 @@ scheduler(void)
   }
 }
 
-// Enter scheduler.  Must hold only ptable.lock
+
+
+// Enter scheduler.  Must myhold only ptable.lock
 // and have changed proc->state. Saves and restores
 // intena because intena is a property of this
 // kernel thread, not this CPU. It should
@@ -444,7 +517,7 @@ void
 forkret(void)
 {
   static int first = 1;
-  // Still holding ptable.lock from scheduler.
+  // Still myholding ptable.lock from scheduler.
   release(&ptable.lock);
 
   if (first) {
@@ -474,7 +547,7 @@ sleep(void *chan, struct spinlock *lk)
 
   // Must acquire ptable.lock in order to
   // change p->state and then call sched.
-  // Once we hold ptable.lock, we can be
+  // Once we myhold ptable.lock, we can be
   // guaranteed that we won't miss any wakeup
   // (wakeup runs with ptable.lock locked),
   // so it's okay to release lk.
@@ -578,4 +651,14 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+int 
+modpriority(int value){
+
+  struct proc *p = myproc();
+  p->prior_val = value;
+
+  return 0;
+
 }

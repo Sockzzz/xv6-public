@@ -121,6 +121,7 @@ int             wait(int *status); //changed in lab 1.b
 int             waitpid(int pid, int *status, int options); //added in lab 1.c
 void            wakeup(void*);
 void            yield(void);
+int             modpriority(int value); //added in lab 2
 
 // swtch.S
 void            swtch(struct context**, struct context*);

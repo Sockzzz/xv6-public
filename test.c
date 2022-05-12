@@ -1,6 +1,64 @@
 #include "types.h"
 #include "user.h"
+#include "stat.h"
 
+/*
+int main(int argc, char *argv[]){
+
+  modpriority(1);
+  int i, k;
+  for(i = 0; i < 43000; i++){
+
+    asm("nop");
+    for(k=0;k<43000;k++){
+      asm("nop");
+    }
+
+  }
+
+  exit(0);
+
+}
+*/
+
+
+
+
+void work() {
+  int i,k;
+  for(i = 0; i < 43000; i++) {
+    for(k = 0; k < 43000; k++) {
+      asm("nop");
+    }
+  }
+}
+
+int main() {
+  modpriority(0);
+  int i = 0;
+  int pid = 0;
+  for(i = 0; i < 3; i++) {
+    pid = fork();
+    if(!pid) {
+      modpriority(i * 10);
+      int *id = malloc(sizeof(*id));
+      work();
+      printf(0, "child %d done\n", getpid());
+      exit(0);
+    }
+  }
+  if(pid) {
+    
+    for(i = 0; i < 3; i++){
+      int *id2 = malloc(sizeof(*id2));
+      wait(id2);
+    }
+  }
+  printf(0, "parent %d done\n", getpid());
+  exit(0);
+}
+
+/*
 #define WNOHANG 	1
 
 int main(int argc, char *argv[])
@@ -101,3 +159,4 @@ int waitPid(void){
 
   return 0;
 }
+*/
