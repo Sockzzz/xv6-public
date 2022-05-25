@@ -1,0 +1,12 @@
+Memory management
+
+get starter code from github repo
+DUE JUNE 5th
+-Change user memory layour
+    -stack heap to heap stack
+-Implement stack growth
+    -pagefault is triggered when stack is overflowed beyond allocated page
+
+
+Both heap and stackshould be able to increase in size using free space
+    Currently in xv6, only heap can increase

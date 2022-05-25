@@ -453,8 +453,7 @@ scheduler(void)
 
 
       p->runCount = p->runCount+1; //lab2 part 5 added
-      cprintf("%s %d, %d", "Count time ",p->pid, p->runCount);
-      cprintf("\n");
+  
 
 
       c->proc = p;
